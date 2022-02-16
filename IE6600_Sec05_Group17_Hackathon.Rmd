@@ -1,0 +1,329 @@
+---
+title: "IE6600-Sec05-Group17_Hackathon"
+author: "Arjun Janardhan, Ajay Parthiban Senthilvel, Chaitanya mandava"
+date: "10/12/2021"
+output: pdf_document
+---
+
+```{r Libraries, include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(magrittr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(scales)
+library(treemapify)
+library(usmap)
+```
+
+
+```{r Data, include=FALSE}
+setwd("~/Downloads/Computation and Visualization/Hackathon")
+getwd()
+US_State_13<-read.csv('2013_US_State_Statistics.csv', na.strings = "")
+State_Homelessness<-read.csv('State_Homelessness_Breakdown.csv', na.strings = "")
+Yearly_Stat<-read.csv('Yearly_National_Statistics.csv', na.strings = "")
+```
+
+**Introduction**
+
+Homelessness in the USA is one of the significant problems associated with the nation's current-day development. The data we got from the United States census bureau has helped us visualize in this hackathon. Apart from this, the information we use in this dataset has been taken from the national alliance to end homelessness, which allowed us to analyze the different types of homelessness and relate homelessness to the chronic diseases people are suffering from. The Homeless research Institute has been trying to reduce homelessness over the past few years.
+
+
+
+**Problem Statement**
+
+Working on these datasets based on 7-8  years old helped us read the scenario of the dataset. We have seen all the different possibilities of homelessness and the reasons for homelessness. Most chronically diseased people are homeless; followed by this, the dataset significantly impacts individuals rather than the families. In addition to this, major cities have more homeless people like New York, Massachusetts, North Dakota, Oregon, Nevada, and California. Initially, we established the trends in the dataset by following the data through the years 2005-2013. Supplementing this, we found out the different categories of homeless people in the year 2013. We split the data into two categories based on population to establish a relationship to look into the change over last year's homeless people count. Furthermore, the homeless population also had non-chronic who were lost, which helped us find the difference between chronic and non-chronic people who were homeless.
+This data was until 2013, but as the trends keep on updating, the data keeps on updating, helping us analyze the decrement of homeless over the years.
+
+
+
+
+
+
+**Q1: How has the distribution of homeless people been over the years, and what are the different types of the homeless population?**
+
+
+```{r task 1, echo=FALSE}
+
+Ans1 <- Yearly_Stat[,c(1,2,6,7,11,12,16,18)]
+
+Ans2 <- Ans1 %>%
+  pivot_longer(-Year, names_to = "Type", values_to = "Count")
+
+Ans <- ggplot(Ans2, aes(x=Year, y=Count, group=Type, color=Type)) + 
+  geom_line() +
+  geom_point() +
+  geom_text(aes(label=Count,), vjust=-0.5, size=2.9) + 
+  scale_x_continuous(labels=function(n){format(n, scientific = FALSE)}, breaks = c(2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013), limits = c(2005, 2013)) +
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 800000)) +
+  ggtitle("Types of Homeless people over the years")
+  
+Ans
+
+```
+
+**Output**
+We decided to initially plot a line chart that helped us analyze the count of homeless in the United States from this data. Moreover, we could see a decrease in homeless people count over the past few years. We could also see what kind of population saw the most decrement in the number of homeless people.
+
+
+
+
+
+
+**Q2: How is the density of the homeless population distributed across the United States in the year 2013? How has this been categorized across the United States?**
+
+```{r task 2.1, echo=FALSE}
+
+# Plotting the homeless population density for each state on the US map 
+
+task2 <- plot_usmap(data = data.frame(US_State_13), values = "Rate.of.Homeless.Population.per.10.000", color = "blue",labels = TRUE) + scale_fill_continuous(low = "white", high = "red", name = "Rate of Population per 10000", label = scales::comma) + theme(legend.position = "right", plot.title = element_text(hjust = -0.2,size = 15,face = "bold"),legend.box.background = element_rect(color="black", size=1),legend.box.margin = margin(25, 6, 6, 6)) + 
+  ggtitle("Distribution of Homeless Population per 10000 across US") 
+task2
+
+```
+
+
+```{r task 2.2, echo=FALSE}
+
+#Getting only the required parameters for plotting the pie chart
+df_us_stats_2013_cat <- Yearly_Stat[9,c(1,2,11,12,14,15)]
+
+
+#Using the pivot_longer function
+
+df_stats_2013 <- df_us_stats_2013_cat %>% pivot_longer(c("Non.Chronic.Individuals","Chronic.Individuals","Non.Chronic.People.in.Families","Chronic.Persons.in.Families"),names_to = "Categories_of_Homeless_Population",values_to = "Count")
+
+#Creating a new column to calculate the percentage of each category according to the homeless population
+df_stats_2013 <- mutate(df_stats_2013, Category_Percent = ((Count/Overall)*100))
+
+
+## Plotting the pie-chart
+
+task2_2 <- ggplot(df_stats_2013,aes(x="",y=Count,fill=Categories_of_Homeless_Population)) + 
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0) + 
+  theme_void() + 
+  ggtitle("Categories of Homeless Population Across US in the year 2013") + 
+  theme(plot.title = element_text(hjust = -0.2,size = 15,face = "bold"),legend.text = element_text(size=8),legend.title = element_text(hjust = 0.5,size = 10,face = "bold"),legend.box.background = element_rect(color="black", size=1),legend.box.margin = margin(25, 6, 6, 6)) +
+  guides(fill  = guide_legend(reverse = TRUE))+
+  scale_fill_brewer(name = "Categories") + 
+  geom_text(aes(label = paste0(round(df_stats_2013$Category_Percent),"%")),position = position_stack(vjust = 0.5),size = 3,face="bold") 
+
+task2_2
+
+
+
+```
+
+**Output**
+For this analysis, we plot the distribution of homeless people across the United States, using a map of the United States. Furthermore, this data helped us categorize the homeless population in the United States in 2013 primarily as chronic and non-chronic. Through this, we understand how the various types of homeless people are distributed across the United States.
+
+
+
+
+
+**Q3: How can we analyze the correlation between population and change in homelessness? Does the population influence the change in homelessness?**
+
+```{r task 3, echo=FALSE}
+
+Ans1 <- US_State_13[,c(1,11,12)]
+
+Ans1$Change.from.Last.Year<-gsub("%","",as.character(Ans1$Change.from.Last.Year))
+
+Ans1 <- transform(Ans1,Growth_Rate = as.numeric(Change.from.Last.Year))
+
+Large_Population <- Ans1 %>%
+  filter(Population > 4000000)
+
+Less_Population <- Ans1 %>%
+  filter(Population < 4000000)
+
+Most_Populated <- ggplot(Large_Population, aes(x = state, y = Growth_Rate, fill = (Growth_Rate > 0))) +
+  geom_col() +
+  scale_fill_manual(values=c("Red", "green"), labels = c("Negative growth rate", "Positive growth rate")) +
+  coord_flip() +
+  ggtitle("Homelessness growth rate in most populated states")
+
+Least_Populated <- ggplot(Less_Population, aes(x = state, y = Growth_Rate, fill = (Growth_Rate > 0))) +
+  geom_col() +
+  scale_fill_manual(values=c("Red", "green"), labels = c("Negative growth rate", "Positive growth rate")) +
+  coord_flip() +
+  ggtitle("Homelessness growth rate in least populated states")
+
+Most_Populated
+
+Least_Populated
+
+```
+
+**Output**
+Looking at the concentration of population of the various states in the United States, we categorized the data as above 4 million and below 4 million, and later we have analyzed the trends using a bar graph as the negative and positive scale of the percentage change in the homeless population over the year 2012-2013.
+
+
+
+
+
+
+**Q4: Only the non-chronic people tend to be more homeless than the chronic. Justify the answer.**
+
+```{r task 4, echo=FALSE}
+
+Ans1 <- Yearly_Stat[,c(1,11,12)]
+
+Ans2 <- Ans1 %>%
+  pivot_longer(-Year, names_to = "Type", values_to = "Count")
+
+
+Year05 <- Ans2 %>%
+  filter(Year==2005) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2005") +
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year06 <- Ans2 %>%
+  filter(Year==2006) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2006")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year07 <- Ans2 %>%
+  filter(Year==2007) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2007")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year08 <- Ans2 %>%
+  filter(Year==2008) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2008")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year09 <- Ans2 %>%
+  filter(Year==2009) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2009")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year10 <- Ans2 %>%
+  filter(Year==2010) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2010")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year11 <- Ans2 %>%
+  filter(Year==2011) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2011")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year12 <- Ans2 %>%
+  filter(Year==2012) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2012")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+Year13 <- Ans2 %>%
+  filter(Year==2013) %>%
+  ggplot(aes(x=Type, y= Count)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "steelblue") +
+  geom_text(aes(label=Count,), vjust=1.6, color="white", size=2.9) +
+  ggtitle("2013")+
+  scale_y_continuous(labels=function(n){format(n, scientific = FALSE)}, limits = c(0, 300000)) +
+  theme(axis.text.x = element_text(face="bold",size=7),
+          axis.text.y = element_text(face="bold", 
+                           size=7))
+
+
+
+grid.arrange(Year05, Year06, Year07, Year08, Year09, Year10, Year11, Year12, Year13, ncol=3)
+
+```
+
+
+```{r task 4.2, echo=FALSE}
+
+tree1 <- ggplot(Ans1, aes(area = Chronic.Individuals,subgroup =Year, label=Year, fill=Year)) +
+  geom_treemap() +
+  geom_treemap_text( colour = "white", place = "centre",size = 13, grow = FALSE) +
+  ggtitle("Chronic Individuals")
+
+
+tree2 <- ggplot(Ans1, aes(area = Non.Chronic.Individuals,subgroup =Year, label=Year, fill=Year)) +
+  geom_treemap() +
+  geom_treemap_text( colour = "white", place = "centre",size = 13, grow = FALSE) +
+  ggtitle("Non Chronic Individuals")
+
+grid.arrange(tree1,tree2)
+```
+
+**Output**
+As we have analyzed the data, we got some relations between homeless and chronically diseased people. Passing through the years, more non-chronic people are homeless than chronic people. There might be several reasons for this, but we could exactly show the difference between chronically diseased people and non-chronically diseased people.
+
+
+
+
+
+**Conclusion**
+Working with extensive data opens a gate to explore a lot of visualizations. The data we have worked on in this hackathon has more usage in the government and many non-profitable organizations, which helps improve the situations in the country addressing this issue. Initially, looking at the dataset, we started to reach out how the population has been changing over the years and the categories in the weightage of homeless people. Followed by this, we also got the distribution of homeless people across the country and what percentage of the homeless are families and individuals and who are chronic and non-chronic. Until now, we only saw the population distribution across the country.
+Further, we expanded the categories in this distribution and counted the number of chronic and non-chronic people in the total number of homeless people using the bar graphs. In addition to this, we plotted a treemap graph to show the density of homeless people over the years. Analyzing such kinds of data gives us a base to explore through many visualizations and supporting any non-analyst how to understand the data easily.
+
+
+
+
+
+
+**References**:
+
+1. https://www.rdocumentation.org/packages/ggplot2/versions/3.3.5
+
+2. https://jtr13.github.io/cc19/different-ways-of-plotting-u-s-map-in-r.html#using-usmap-package
+
+
+
+
+
+
